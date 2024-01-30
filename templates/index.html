@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../styles/style.css">
+</head>
+<body>
+
+  <form id="shippingForm" action="/" method="post">
+    <label for="sourceLocation">Source Location:</label>
+    <input type="text" name="sourceLocation" id="sourceLocation" placeholder="City, Province Code" required>
+
+    <label for="sourceTemperature">Source Temperature:</label>
+    <input type="text" name="sourceTemperature" id="sourceTemperature" placeholder="Source Temperature" required>
+
+    <label for="sourceDuration">Source Duration (hours):</label>
+    <input type="text" name="sourceDuration" id="sourceDuration" placeholder="Source Duration" required>
+
+    <div id="stepsContainer"></div>
+
+    <button type="button" onclick="addstep()">Add step</button>
+
+    <input type="submit" value="Plan Route">
+  </form>
+
+  <script>
+    function addstep() {
+      const stepsContainer = document.getElementById('stepsContainer');
+      const stepIndex = stepsContainer.children.length + 1;
+
+      const stepDiv = document.createElement('div');
+      stepDiv.classList.add('step-container');
+      stepDiv.id = `step${stepIndex}`;
+
+      stepDiv.innerHTML = `
+        <label>
+          <input type="checkbox" name="atCarrierDepot${stepIndex}" id="atCarrierDepot${stepIndex}" onchange="toggleTemperatureInput(${stepIndex})">
+          At Carrier Depot
+        </label>
+
+        <label>
+          <input type="checkbox" name="inTransit${stepIndex}" id="inTransit${stepIndex}">
+          In Transit
+        </label>
+
+        <label>
+          <input type="checkbox" name="controllable${stepIndex}" onchange="toggleTemperatureInput(${stepIndex})" id="controllable${stepIndex}">
+          Controllable Temperature
+        </label>
+
+        <label for="stepLocation${stepIndex}">Step ${stepIndex} Location:</label>
+        <input type="text" name="stepLocation${stepIndex}" id="stepLocation${stepIndex}" placeholder="City, Province Code" required>
+
+        <label for="stepDuration${stepIndex}">Step ${stepIndex} Duration (hours):</label>
+        <input type="text" name="stepDuration${stepIndex}" id="stepDuration${stepIndex}" placeholder="Step Duration" required>
+
+        <div id="temperatureBlock${stepIndex}" style="display: none;">
+          <label for="stepTemperature${stepIndex}">Step ${stepIndex} Temperature:</label>
+          <input type="text" name="stepTemperature${stepIndex}" id="stepTemperature${stepIndex}" placeholder="Step Temperature">
+        </div>
+
+        <div id="minmaxBlock${stepIndex}" style="display: none;">
+          <label for="MinTemp${stepIndex}">Min ${stepIndex} Temperature:</label>
+          <input type="text" name="MinTemp${stepIndex}" id="minTemp${stepIndex}" placeholder="Min Temperature (avg.)">
+          <label for="MaxTemp${stepIndex}">Max ${stepIndex} Temperature:</label>
+          <input type="text" name="MaxTemp${stepIndex}" id="maxTemp${stepIndex}" placeholder="Max Temperature (avg.)">
+        </div>
+
+        <span class="remove-step" onclick="removestep(${stepIndex})">Remove step</span>
+      `;
+
+      stepsContainer.appendChild(stepDiv);
+    }
+
+    // function toggleDepotFields(stepIndex) {
+    //   const atCarrierDepotCheckbox = document.getElementById(`atCarrierDepot${stepIndex}`);
+    //   const minmaxBlock = document.getElementById(`minmaxBlock${stepIndex}`);
+
+    //   if (atCarrierDepotCheckbox.checked && !controllableCheckbox.checked) {
+    //     minmaxBlock.style.display = 'block';
+    //   } else {
+    //     minmaxBlock.style.display = 'none';
+    //   }
+    // }
+
+    function toggleTemperatureInput(stepIndex) {
+      const controllableCheckbox = document.getElementById(`controllable${stepIndex}`);
+      const temperatureBlock = document.getElementById(`temperatureBlock${stepIndex}`);
+      const temperatureInput = document.getElementById(`stepTemperature${stepIndex}`);
+      const atCarrierDepotCheckbox = document.getElementById(`atCarrierDepot${stepIndex}`);
+      const minmaxBlock = document.getElementById(`minmaxBlock${stepIndex}`);
+
+      if (atCarrierDepotCheckbox.checked && !controllableCheckbox.checked) {
+        minmaxBlock.style.display = 'block';
+      } else {
+        minmaxBlock.style.display = 'none';
+      }
+
+      if (controllableCheckbox.checked) {
+        temperatureBlock.style.display = 'block';
+        temperatureInput.setAttribute('required', 'required');
+      } else {
+        temperatureBlock.style.display = 'none';
+        temperatureInput.removeAttribute('required');
+      }
+    }
+
+    function removestep(stepIndex) {
+      const stepsContainer = document.getElementById('stepsContainer');
+      const stepToRemove = document.getElementById(`step${stepIndex}`);
+      stepsContainer.removeChild(stepToRemove);
+    }
+  </script>
+
+</body>
+</html>
