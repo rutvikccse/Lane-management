@@ -2,6 +2,8 @@ import asyncio
 from env_canada import ECWeather
 from flask import Flask, render_template, request
 import requests
+import matplotlib.pyplot as plt
+import mpld3  
 
 app = Flask(__name__)
 
@@ -57,13 +59,15 @@ def index():
         source_temperature = request.form['sourceTemperature']
         source_duration = request.form['sourceDuration']
 
-
         source_api_temperature = get_temperature(source_location, False)
 
         step_index = 1
+        cumulative_duration = 0  
+        graph_data = []  
+
         while f'stepLocation{step_index}' in request.form:
             step_location = request.form[f'stepLocation{step_index}']
-            step_duration = request.form[f'stepDuration{step_index}']
+            step_duration = float(request.form[f'stepDuration{step_index}'])
             at_carrier_depot = 'atCarrierDepot' + str(step_index) in request.form
             in_transit = 'inTransit' + str(step_index) in request.form
             controllable = 'controllable' + str(step_index) in request.form
@@ -77,61 +81,38 @@ def index():
                 max_temp = float(max_temp_str) if max_temp_str else 0.0
                 step_temperature = handle_uncontrolled_temperature(at_carrier_depot, min_temp, max_temp, step_temperature)
 
+            cumulative_duration += step_duration  
 
             steps.append({
                 'location': step_location,
-                'duration': step_duration,
+                'duration': cumulative_duration,  
                 'at_carrier_depot': at_carrier_depot,
                 'in_transit': in_transit,
                 'controllable': controllable,
                 'temperature': step_temperature,
             })
 
+            graph_data.append({'duration': cumulative_duration, 'temperature': float(step_temperature)})
+
             step_index += 1
 
-        print("Source Location:", source_location)
-        print("Source Temperature:", source_temperature)
-        print("Source Duration:", source_duration)
-        print("Temperature obtained from API for Source:", source_api_temperature)
+        durations = [data['duration'] for data in graph_data]
+        temperatures = [data['temperature'] for data in graph_data]
 
-        print("Temperatures and Durations for each step:")
+        fig, ax = plt.subplots()
+        ax.step(durations, temperatures, where='post', marker='o')
+        ax.set_title('Temperature vs Cumulative Duration (Step Graph)')
+        ax.set_xlabel('Cumulative Duration (hours)')
+        ax.set_ylabel('Temperature (°C)')
+        ax.grid(True)
 
-        for step_index, step in enumerate(steps, start=1):
-            location = step['location']
-            duration = step['duration']
-            controllable_checkbox_name = 'controllable' + str(step_index)
+        graph_html = mpld3.fig_to_html(fig)
 
-            controlled = controllable_checkbox_name in request.form
-
-            if 'inTransit' + str(step_index) in request.form:
-                if controlled:
-                    temperature = request.form.get(f'stepTemperature{step_index}', '')
-                    print(f"Step {step_index} - In Transit, Controlled Temperature: {temperature}, Duration: {duration}")
-                else:
-                    temperature = get_temperature(location, controlled)
-                    print(f"Step {step_index} - In Transit, Non-Controlled Temperature: {temperature}, Duration: {duration}")
-
-            elif 'atCarrierDepot' + str(step_index) in request.form:
-                if controlled:
-                    temperature = request.form.get(f'stepTemperature{step_index}', '')
-                    print(f"Step {step_index} - At Depot, Controlled Temperature: {temperature}, Duration: {duration}")
-                else:
-                    temperature = get_temperature(location, controlled)
-                    print(f"Step {step_index} - At Depot, Non-Controlled Temperature: {temperature}, Duration: {duration}")
-
-            else:
-                if controlled:
-                    temperature = request.form.get(f'stepTemperature{step_index}', '')
-                    print(f"Step {step_index} - Controlled Temperature: {temperature}, Duration: {duration}")
-                else:
-                    temperature = get_temperature(location, controlled)
-                    print(f"Step {step_index} - Non-Controlled Temperature: {temperature}, Duration: {duration}")
-            
-        return render_template('result_table.html', source_location=source_location, 
+        return render_template('result_table.html', source_location=source_location,
                                source_temperature=source_temperature, source_duration=source_duration,
-                               source_api_temperature=source_api_temperature, steps=steps)
+                               source_api_temperature=source_api_temperature, steps=steps, graph_html=graph_html)
 
     return render_template('index.html')
-    
+
 if __name__ == '__main__':
     app.run(debug=True)
