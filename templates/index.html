@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="../styles/style.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
@@ -25,64 +25,57 @@
   </form>
 
   <script>
+    let stepIndex = 1;
+
     function addstep() {
       const stepsContainer = document.getElementById('stepsContainer');
-      const stepIndex = stepsContainer.children.length + 1;
+      const currentStepIndex = stepIndex;
 
       const stepDiv = document.createElement('div');
       stepDiv.classList.add('step-container');
-      stepDiv.id = `step${stepIndex}`;
+      stepDiv.id = `step${currentStepIndex}`;
 
       stepDiv.innerHTML = `
         <label>
-          <input type="checkbox" name="atCarrierDepot${stepIndex}" id="atCarrierDepot${stepIndex}" onchange="toggleTemperatureInput(${stepIndex})">
+          <input type="checkbox" name="atCarrierDepot${currentStepIndex}" id="atCarrierDepot${currentStepIndex}" onchange="toggleTemperatureInput(${currentStepIndex})">
           At Carrier Depot
         </label>
 
         <label>
-          <input type="checkbox" name="inTransit${stepIndex}" id="inTransit${stepIndex}">
+          <input type="checkbox"  name="inTransit${currentStepIndex}" id="inTransit${currentStepIndex}">
           In Transit
         </label>
 
         <label>
-          <input type="checkbox" name="controllable${stepIndex}" onchange="toggleTemperatureInput(${stepIndex})" id="controllable${stepIndex}">
+          <input type="checkbox" name="controllable${currentStepIndex}" onchange="toggleTemperatureInput(${currentStepIndex})" id="controllable${currentStepIndex}">
           Controllable Temperature
         </label>
 
-        <label for="stepLocation${stepIndex}">Step ${stepIndex} Location:</label>
-        <input type="text" name="stepLocation${stepIndex}" id="stepLocation${stepIndex}" placeholder="City, Province Code" required>
+        <label for="stepLocation${currentStepIndex}">Step ${currentStepIndex} Location:</label>
+        <input type="text" name="stepLocation${currentStepIndex}" id="stepLocation${currentStepIndex}" placeholder="City, Province Code" required>
 
-        <label for="stepDuration${stepIndex}">Step ${stepIndex} Duration (hours):</label>
-        <input type="text" name="stepDuration${stepIndex}" id="stepDuration${stepIndex}" placeholder="Step Duration" required>
+        <label for="stepDuration${currentStepIndex}">Step ${currentStepIndex} Duration (hours):</label>
+        <input type="text" name="stepDuration${currentStepIndex}" id="stepDuration${currentStepIndex}" placeholder="Step Duration" required>
 
-        <div id="temperatureBlock${stepIndex}" style="display: none;">
-          <label for="stepTemperature${stepIndex}">Step ${stepIndex} Temperature:</label>
-          <input type="text" name="stepTemperature${stepIndex}" id="stepTemperature${stepIndex}" placeholder="Step Temperature">
+        <div id="temperatureBlock${currentStepIndex}" style="display: none;">
+          <label for="stepTemperature${currentStepIndex}">Step ${currentStepIndex} Temperature:</label>
+          <input type="text" name="stepTemperature${currentStepIndex}" id="stepTemperature${currentStepIndex}" placeholder="Step Temperature">
         </div>
 
-        <div id="minmaxBlock${stepIndex}" style="display: none;">
-          <label for="MinTemp${stepIndex}">Min ${stepIndex} Temperature:</label>
-          <input type="text" name="MinTemp${stepIndex}" id="minTemp${stepIndex}" placeholder="Min Temperature (avg.)">
-          <label for="MaxTemp${stepIndex}">Max ${stepIndex} Temperature:</label>
-          <input type="text" name="MaxTemp${stepIndex}" id="maxTemp${stepIndex}" placeholder="Max Temperature (avg.)">
+        <div id="minmaxBlock${currentStepIndex}" style="display: none;">
+          <label for="MinTemp${currentStepIndex}">Min ${currentStepIndex} Temperature:</label>
+          <input type="text" name="MinTemp${currentStepIndex}" id="minTemp${currentStepIndex}" placeholder="Min Temperature (avg.)">
+          <label for="MaxTemp${currentStepIndex}">Max ${currentStepIndex} Temperature:</label>
+          <input type="text" name="MaxTemp${currentStepIndex}" id="maxTemp${currentStepIndex}" placeholder="Max Temperature (avg.)">
         </div>
 
-        <span class="remove-step" onclick="removestep(${stepIndex})">Remove step</span>
+        <button class="remove-step" onclick="removestep(${currentStepIndex})">Remove step</button>
       `;
 
       stepsContainer.appendChild(stepDiv);
+      stepIndex++;
     }
 
-    // function toggleDepotFields(stepIndex) {
-    //   const atCarrierDepotCheckbox = document.getElementById(`atCarrierDepot${stepIndex}`);
-    //   const minmaxBlock = document.getElementById(`minmaxBlock${stepIndex}`);
-
-    //   if (atCarrierDepotCheckbox.checked && !controllableCheckbox.checked) {
-    //     minmaxBlock.style.display = 'block';
-    //   } else {
-    //     minmaxBlock.style.display = 'none';
-    //   }
-    // }
 
     function toggleTemperatureInput(stepIndex) {
       const controllableCheckbox = document.getElementById(`controllable${stepIndex}`);
@@ -90,7 +83,8 @@
       const temperatureInput = document.getElementById(`stepTemperature${stepIndex}`);
       const atCarrierDepotCheckbox = document.getElementById(`atCarrierDepot${stepIndex}`);
       const minmaxBlock = document.getElementById(`minmaxBlock${stepIndex}`);
-
+      const inTransitCheckbox = document.getElementById(`inTransit${stepIndex}`);
+      
       if (atCarrierDepotCheckbox.checked && !controllableCheckbox.checked) {
         minmaxBlock.style.display = 'block';
       } else {
@@ -110,6 +104,8 @@
       const stepsContainer = document.getElementById('stepsContainer');
       const stepToRemove = document.getElementById(`step${stepIndex}`);
       stepsContainer.removeChild(stepToRemove);
+
+      stepIndex = Math.max(stepIndex - 1, 1);
     }
   </script>
 

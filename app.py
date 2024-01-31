@@ -3,7 +3,7 @@ from env_canada import ECWeather
 from flask import Flask, render_template, request
 import requests
 import matplotlib.pyplot as plt
-import mpld3  
+import mpld3
 
 app = Flask(__name__)
 
@@ -57,13 +57,14 @@ def index():
         steps = []
         source_location = request.form['sourceLocation']
         source_temperature = request.form['sourceTemperature']
-        source_duration = request.form['sourceDuration']
+        source_duration = float(request.form['sourceDuration'])
 
         source_api_temperature = get_temperature(source_location, False)
 
         step_index = 1
-        cumulative_duration = 0  
-        graph_data = []  
+        cumulative_duration = source_duration
+        graph_data = [{'duration': 0, 'temperature': float(source_temperature), 'status': 'Source'}]
+        graph_data.append({'duration': source_duration, 'temperature': float(source_temperature)})
 
         while f'stepLocation{step_index}' in request.form:
             step_location = request.form[f'stepLocation{step_index}']
@@ -81,21 +82,20 @@ def index():
                 max_temp = float(max_temp_str) if max_temp_str else 0.0
                 step_temperature = handle_uncontrolled_temperature(at_carrier_depot, min_temp, max_temp, step_temperature)
 
-            cumulative_duration += step_duration  
-
+            status = 'In Transit' if in_transit else 'At Depot'
             steps.append({
                 'location': step_location,
-                'duration': cumulative_duration,  
-                'at_carrier_depot': at_carrier_depot,
-                'in_transit': in_transit,
+                'duration': step_duration,
+                'status': status,
                 'controllable': controllable,
                 'temperature': step_temperature,
             })
+            cumulative_duration += step_duration
 
-            graph_data.append({'duration': cumulative_duration, 'temperature': float(step_temperature)})
-
+            graph_data.append({'duration': cumulative_duration, 'temperature': float(step_temperature), 'status': status})
+            print(graph_data)
             step_index += 1
-
+            
         durations = [data['duration'] for data in graph_data]
         temperatures = [data['temperature'] for data in graph_data]
 
@@ -104,7 +104,7 @@ def index():
         ax.set_title('Temperature vs Cumulative Duration (Step Graph)')
         ax.set_xlabel('Cumulative Duration (hours)')
         ax.set_ylabel('Temperature (°C)')
-        ax.grid(True)
+        plt.grid(True, alpha=0.3)
 
         graph_html = mpld3.fig_to_html(fig)
 
@@ -113,6 +113,9 @@ def index():
                                source_api_temperature=source_api_temperature, steps=steps, graph_html=graph_html)
 
     return render_template('index.html')
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)

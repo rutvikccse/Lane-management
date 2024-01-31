@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Result Page</title>
-    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <h1>Result Details</h1>
@@ -16,8 +16,7 @@
             <th>Location</th>
             <th>Temperature</th>
             <th>Duration</th>
-            <th>In Transit</th>
-            <th>At Carrier Depot</th>
+            <th>Status</th>
             <th>Controllable</th>
         </tr>
 
@@ -28,7 +27,6 @@
             <td>{{ source_duration }}</td>
             <td></td>
             <td></td>
-            <td></td>
         </tr>
 
         {% for step in steps %}
@@ -37,13 +35,13 @@
                 <td>{{ step.location }}</td>
                 <td>{{ step.temperature }}</td>
                 <td>{{ step.duration }}</td>
-                <td>{{ 'Yes' if step.in_transit else '' }}</td>
-                <td>{{ 'Yes' if step.at_carrier_depot else '' }}</td>
+                <td>{{ step.status }}</td>
                 <td>{{ 'Yes' if step.controllable else '' }}</td>
             </tr>
         {% endfor %}
     </table>
 
     {{ graph_html|safe }}
+    
 </body>
 </html>
