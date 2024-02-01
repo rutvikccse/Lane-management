@@ -92,6 +92,7 @@ def index():
             })
             step_index += 1
 
+        # Extract x-values and y-values from the loop data
         x_values = [0]
         y_values = [float(source_temperature)]
 
@@ -101,11 +102,20 @@ def index():
             y_values.extend([float(step['temperature']), float(step['temperature'])])
             cumulative_duration += step['duration']
 
+        baseline_coordinates = [(0, 20), (4, 20), (2, -10), (6, 10), (4, -25), (4, 15),
+                                      (2, 10), (4, -20), (4, -5), (6, 15), (2, 0), (10, 20),
+                                      (4, -10), (16, 10), (4, -25)]
+
+        x_values_baseline = [cumulative_duration + duration for _, duration in baseline_coordinates]
+        y_values_baseline = [y for _, y in baseline_coordinates]
+
         fig, ax = plt.subplots()
 
-        ax.step(x_values, y_values, where='post', color='blue', label='Temperature')
+        ax.step(x_values, y_values, where='post', color='blue', label='Temperature from Data', marker='o')
 
-        sorted_y_ticks = sorted(set(y_values))
+        ax.step(x_values_baseline, y_values_baseline, where='post', color='red', label='Baseline',marker='o')
+
+        sorted_y_ticks = sorted(set(y_values + y_values_baseline))
         ax.set_yticks(sorted_y_ticks)
 
         ax.set_xlabel('Duration')
@@ -125,4 +135,4 @@ def index():
     return render_template('index.html')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
