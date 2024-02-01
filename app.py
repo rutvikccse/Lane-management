@@ -4,6 +4,8 @@ from flask import Flask, render_template, request
 import requests
 import matplotlib.pyplot as plt
 import mpld3
+import numpy as np
+
 
 app = Flask(__name__)
 
@@ -63,8 +65,6 @@ def index():
 
         step_index = 1
         cumulative_duration = source_duration
-        graph_data = [{'duration': 0, 'temperature': float(source_temperature), 'status': 'Source'}]
-        graph_data.append({'duration': source_duration, 'temperature': float(source_temperature)})
 
         while f'stepLocation{step_index}' in request.form:
             step_location = request.form[f'stepLocation{step_index}']
@@ -90,32 +90,39 @@ def index():
                 'controllable': controllable,
                 'temperature': step_temperature,
             })
-            cumulative_duration += step_duration
-
-            graph_data.append({'duration': cumulative_duration, 'temperature': float(step_temperature), 'status': status})
-            print(graph_data)
             step_index += 1
-            
-        durations = [data['duration'] for data in graph_data]
-        temperatures = [data['temperature'] for data in graph_data]
+
+        x_values = [0]
+        y_values = [float(source_temperature)]
+
+        cumulative_duration = source_duration
+        for step in steps:
+            x_values.extend([cumulative_duration, cumulative_duration + step['duration']])
+            y_values.extend([float(step['temperature']), float(step['temperature'])])
+            cumulative_duration += step['duration']
 
         fig, ax = plt.subplots()
-        ax.step(durations, temperatures, where='post', marker='o')
-        ax.set_title('Temperature vs Cumulative Duration (Step Graph)')
-        ax.set_xlabel('Cumulative Duration (hours)')
-        ax.set_ylabel('Temperature (°C)')
-        plt.grid(True, alpha=0.3)
 
-        graph_html = mpld3.fig_to_html(fig)
+        ax.step(x_values, y_values, where='post', color='blue', label='Temperature')
+
+        sorted_y_ticks = sorted(set(y_values))
+        ax.set_yticks(sorted_y_ticks)
+
+        ax.set_xlabel('Duration')
+        ax.set_ylabel('Temperature')
+        ax.set_title('Temperature vs Duration')
+        ax.legend()
+        ax.grid(True)
+
+        plt.savefig('static/temperature_graph.png') 
+        plt.close()  
 
         return render_template('result_table.html', source_location=source_location,
                                source_temperature=source_temperature, source_duration=source_duration,
-                               source_api_temperature=source_api_temperature, steps=steps, graph_html=graph_html)
+                               source_api_temperature=source_api_temperature, steps=steps,
+                               graph_image='temperature_graph.png')  
 
     return render_template('index.html')
-
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)

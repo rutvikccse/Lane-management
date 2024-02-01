@@ -41,7 +41,9 @@
         {% endfor %}
     </table>
 
-    {{ graph_html|safe }}
+    {% if graph_image %}
+        <img src="{{ url_for('static', filename=graph_image) }}" alt="Temperature Graph">
+    {% endif %}
     
 </body>
 </html>
